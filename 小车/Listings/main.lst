@@ -1,0 +1,225 @@
+C51 COMPILER V9.54   MAIN                                                                  11/15/2022 21:15:46 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keil5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.l
+                    -st) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <reg52.h>
+   2          typedef unsigned int u16;
+   3          typedef unsigned char u8;
+   4          unsigned int flag;
+   5          
+   6          sbit right_ENA=P2^6;  //小车右侧电机驱动
+   7          sbit right_ENB=P2^1;
+   8          sbit right_IN1=P2^2;
+   9          sbit right_IN2=P2^3;
+  10          sbit right_IN3=P2^4;
+  11          sbit right_IN4=P2^5;
+  12          
+  13          sbit left_ENA=P0^5;   //小车左侧电机驱动
+  14          sbit left_ENB=P0^6;
+  15          sbit left_IN1=P0^1;
+  16          sbit left_IN2=P0^2;
+  17          sbit left_IN3=P0^3;
+  18          sbit left_IN4=P0^4;
+  19          
+  20          sbit left1=P1^3;    //四路红外
+  21          sbit left2=P1^2;
+  22          sbit right2=P1^0;
+  23          sbit right1=P1^1;
+  24          
+  25          u8 pwm_t=0;       //计时器溢出统计
+  26          u8 pwm_right_val=0;   //右侧电机使能值
+  27          u8 pwm_left_val=0;    //左侧电机使能值
+  28          
+  29          void forward()      //前进
+  30          {
+  31   1        right_IN1=1;
+  32   1        right_IN2=0;
+  33   1        right_IN3=1;
+  34   1        right_IN4=0;
+  35   1      
+  36   1        left_IN1=1;
+  37   1        left_IN2=0;
+  38   1        left_IN3=1;
+  39   1        left_IN4=0;
+  40   1      
+  41   1        pwm_left_val=185;
+  42   1        pwm_right_val=185;
+  43   1      }
+  44          
+  45          void turnLeft1()    //左转小弯
+  46          {
+  47   1        right_IN1=1;
+  48   1        right_IN2=0;
+  49   1        right_IN3=1;
+  50   1        right_IN4=0;
+  51   1      
+  52   1        left_IN1=0;
+  53   1        left_IN2=1;
+  54   1        left_IN3=0;
+C51 COMPILER V9.54   MAIN                                                                  11/15/2022 21:15:46 PAGE 2   
+
+  55   1        left_IN4=1;
+  56   1      
+  57   1        pwm_left_val=120;
+  58   1        pwm_right_val=100;
+  59   1      }
+  60          
+  61          void turnLeft2()    //左转大弯
+  62          {
+  63   1        right_IN1=1;
+  64   1        right_IN2=0;
+  65   1        right_IN3=1;
+  66   1        right_IN4=0;
+  67   1      
+  68   1        left_IN1=0;
+  69   1        left_IN2=1;
+  70   1        left_IN3=0;
+  71   1        left_IN4=1;
+  72   1      
+  73   1        pwm_left_val=100;
+  74   1        pwm_right_val=80;       
+  75   1      }
+  76          
+  77          void turnRight1()   //右转小弯
+  78          {
+  79   1        right_IN1=0;
+  80   1        right_IN2=1;
+  81   1        right_IN3=0;
+  82   1        right_IN4=1;
+  83   1      
+  84   1        left_IN1=1;
+  85   1        left_IN2=0;
+  86   1        left_IN3=1;        
+  87   1        left_IN4=0;
+  88   1      
+  89   1        pwm_left_val=100;
+  90   1        pwm_right_val=120;
+  91   1      }
+  92          
+  93          void turnRight2()   //右转大弯
+  94          {
+  95   1        right_IN1=0;
+  96   1        right_IN2=1;
+  97   1        right_IN3=0;
+  98   1        right_IN4=1;
+  99   1      
+ 100   1        left_IN1=1;
+ 101   1        left_IN2=0;
+ 102   1        left_IN3=1;
+ 103   1        left_IN4=0;
+ 104   1      
+ 105   1        pwm_left_val=80;
+ 106   1        pwm_right_val=100;
+ 107   1      }
+ 108          
+ 109          void stop()       //停止
+ 110          {
+ 111   1        right_IN1=0;
+ 112   1        right_IN2=0;
+ 113   1        right_IN3=0;
+ 114   1        right_IN4=0;
+ 115   1      
+ 116   1        left_IN1=0;
+C51 COMPILER V9.54   MAIN                                                                  11/15/2022 21:15:46 PAGE 3   
+
+ 117   1        left_IN2=0;
+ 118   1        left_IN3=0;
+ 119   1        left_IN4=0;
+ 120   1      }
+ 121          
+ 122          void follow()     //根据红外的不同情况循迹
+ 123          {
+ 124   1        if((right2 == 0)&&(right1 == 0)&&(left1 == 0)&&(left2 == 0)
+ 125   1          ||(right2 == 1)&&(right1 == 1)&&(left1 == 1)&&(left2 == 1)
+ 126   1          ||(right2 == 1)&&(right1 == 0)&&(left1 == 0)&&(left2 == 1))
+ 127   1        {
+ 128   2          flag = 0;
+ 129   2        }
+ 130   1        if((right2 == 1)&&(right1 ==0)&&(left1 == 0)&&(left2 == 0))
+ 131   1        {
+ 132   2          flag = 1;
+ 133   2        }
+ 134   1        if((right2 == 0)&&(right1 == 0)&&(left1 == 0)&&(left2 == 1))
+ 135   1        {
+ 136   2          flag = 2;
+ 137   2        }
+ 138   1        if((right2 == 0)&&(right1 == 0)&&(left1 == 1)&&(left2 == 0)
+ 139   1          ||(right2 == 0)&&(right1 == 0)&&(left1 == 1)&&(left2 == 1))
+ 140   1        {
+ 141   2          flag = 3;
+ 142   2        }
+ 143   1        if((right2 == 0)&&(right1 == 1)&&(left1 == 0)&&(left2 == 0)
+ 144   1          ||(right2 == 1)&&(right1 == 1)&&(left1 == 0)&&(left2 == 0))
+ 145   1        {
+ 146   2          flag = 4;
+ 147   2        }
+ 148   1      
+ 149   1        switch(flag)
+ 150   1        {
+ 151   2          case 0:forward();break;
+ 152   2          
+ 153   2          case 1:stop();turnRight1();break;
+ 154   2          
+ 155   2          case 2:stop();turnLeft1();break;
+ 156   2          
+ 157   2          case 3:stop();turnLeft2();break;
+ 158   2          
+ 159   2          case 4:stop();turnRight2();break;
+ 160   2      
+ 161   2          default:stop();break;
+ 162   2        }
+ 163   1      
+ 164   1      }
+ 165          
+ 166          void main()
+ 167          {
+ 168   1        TMOD=0x02;      //定时器模式设置并赋初始值，打开定时器和中断                               
+ 169   1        TH0=220;              
+ 170   1        TL0=220;
+ 171   1        TR0=1;
+ 172   1        ET0=1;
+ 173   1        EA=1;
+ 174   1      
+ 175   1        while(1)
+ 176   1        {
+ 177   2          follow(); 
+ 178   2        }
+C51 COMPILER V9.54   MAIN                                                                  11/15/2022 21:15:46 PAGE 4   
+
+ 179   1      
+ 180   1      }
+ 181          
+ 182          void time0() interrupt 1
+ 183          {
+ 184   1        if(pwm_t >=256)         //占空比分为256份，但最大200就不能转
+ 185   1          pwm_t=20;
+ 186   1        if(pwm_t < pwm_left_val)
+ 187   1          left_ENA=left_ENB=0;
+ 188   1        else
+ 189   1          left_ENA=left_ENB=1;
+ 190   1        if(pwm_t < pwm_right_val)
+ 191   1          right_ENA=right_ENB=0;
+ 192   1        else
+ 193   1          right_ENA=right_ENB=1;
+ 194   1        pwm_t++;
+ 195   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    397    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      5    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
